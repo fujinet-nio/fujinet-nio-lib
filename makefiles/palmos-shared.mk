@@ -139,6 +139,11 @@ $(B)/NioLib.prc: $(B)/libr0000.bin $(B)/nDat0000.bin
 
 $(B)/test.o: $(T)/test.c include/palmos/NioLib.h | $(B)
 	$(CC) $(PALMFLAGS) -Iinclude -c $< -o $@
+$(B)/test.o: $(T)/benchmark.h $(T)/write_benchmark.h
+$(B)/benchmark.o: $(T)/benchmark.c $(T)/benchmark.h $(wildcard include/*.h include/palmos/*.h) $(B)/settings | $(B)
+	$(CC) $(PALMFLAGS) -Iinclude -c $< -o $@
+$(B)/write_benchmark.o: $(T)/write_benchmark.c $(T)/write_benchmark.h $(wildcard include/*.h include/palmos/*.h) $(B)/settings | $(B)
+	$(CC) $(PALMFLAGS) -Iinclude -c $< -o $@
 $(B)/registers.o: $(T)/registers.S | $(B)
 	$(CC) $(PALMFLAGS) -c $< -o $@
 $(B)/client.o: $(S)/client.c include/palmos/NioLib.h include/palmos/NioLibClient.h | $(B)
@@ -147,13 +152,13 @@ $(B)/libniolib-client.a: $(B)/client.o $(CLIENTOBJS) $(CLIENTCOMMONOBJS)
 	m68k-palmos-ar rcs $@ $^
 $(B)/service-link.o: tests/palmos_service_link.c $(wildcard include/palmos/*.h) $(B)/settings | $(B)
 	$(CC) $(PALMFLAGS) -Iinclude -c $< -o $@
-$(B)/NioLibTest: $(B)/test.o $(B)/registers.o $(B)/service-link.o $(B)/libniolib-client.a
+$(B)/NioLibTest: $(B)/test.o $(B)/benchmark.o $(B)/write_benchmark.o $(B)/registers.o $(B)/service-link.o $(B)/libniolib-client.a
 	$(CC) $(PALMFLAGS) -Wl,-Map,$@.map -o $@ $^
 $(B)/test-resources.stamp: $(T)/test.rcp | $(B)
 	$(PILRC) -q $< $(B)
 	touch $@
 $(B)/NioLibTest.prc: $(B)/NioLibTest $(B)/test-resources.stamp
-	$(BUILD_PRC) -c NiT1 -n NioLibTest -o $@ $(B)/NioLibTest $(B)/tFRM03e8.bin $(B)/tFRM03ea.bin $(B)/tFRM03f2.bin $(B)/tAIN03e8.bin
+	$(BUILD_PRC) -c NiT1 -n NioLibTest -o $@ $(B)/NioLibTest $(B)/tFRM03e8.bin $(B)/tFRM03ea.bin $(B)/tFRM03f2.bin $(B)/tFRM03fc.bin $(B)/tFRM0406.bin $(B)/Talt0403.bin $(B)/Talt040c.bin $(B)/Talt040d.bin $(B)/tAIN03e8.bin
 
 verify: $(B)/NioLib.prc $(B)/NioLibTest.prc
 	$(PYTHON) scripts/palmos_shared_image.py audit $(B)
