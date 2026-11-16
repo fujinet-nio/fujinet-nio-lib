@@ -36,6 +36,11 @@ make test-palmos-shared PALMOS_SDK_VERSION=3.5 \
 Coverage includes compiled library/client globals, ownership, handles,
 validation, CS1 deadlines, serial SLIP/partial I/O, USB counted I/O, retained
 driver memory, readiness, JSON selectors and ABI 1.5 confirmed recovery.
+ABI 1.6 adds compiled service/client coverage for files, clock formats, Wi-Fi,
+AppStore/appkeys, catalogs/mounts, disks and header Open across scripted peers.
+These tests also check capability/version negotiation and guarded new traps.
+The layout tests exercise independent code/global limits and early/late growth;
+they are part of `make check-palmos` and require the installed Palm toolchain.
 Recovery tests check idle/confirmation guards, failed preference writes, no
 reset-time packets, reload persistence and reuse after modeled peer reset.
 They do not establish real ROM timing, reset persistence or physical recovery.
