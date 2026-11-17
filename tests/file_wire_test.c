@@ -164,6 +164,32 @@ int main(void)
         CHECK(fn_file_write(&io, "host:/", 1, input, 6, &write) == FN_ERR_INVALID);
         CHECK(calls == before);
     }
+    /* A device must not return more than was asked for: replies that are the right
+     * size for their own length field but overrun the caller's buffer or struct. */
+    io.capacity = sizeof(scratch);
+    at = setup(FN_CMD_FILE_READ);
+    FN_PUT_LE32(expected + at, 7); FN_PUT_LE16(expected + at + 4, 4); expected_length += 6;
+    FN_PUT_LE32(answer + 4, 7); FN_PUT_LE16(answer + 8, 5); memset(answer + 10, 'x', 5);
+    answer_length = 15; memset(data, 0xa5, sizeof(data)); memcpy(saved, data, sizeof(data));
+    CHECK(fn_file_read(&io, "host:/", 7, data, 4, &read) == FN_ERR_IO);
+    CHECK(!memcmp(data, saved, sizeof(data)));
+    setup(FN_CMD_FILE_STAT); answer[1] = FN_FILE_EXISTS; answer_length = 21;
+    CHECK(fn_file_stat(&io, "host:/", &stat) == FN_ERR_IO);
+    at = setup(FN_CMD_FILE_WRITE);
+    FN_PUT_LE32(expected + at, 9); FN_PUT_LE16(expected + at + 4, 3);
+    memcpy(expected + at + 6, "abc", 3); expected_length += 9;
+    FN_PUT_LE32(answer + 4, 9); FN_PUT_LE16(answer + 8, 2); answer_length = 11;
+    CHECK(fn_file_write(&io, "host:/", 9, (const uint8_t *)"abc", 3, &write) == FN_ERR_IO);
+    setup(0x0f); expected_device = FN_DEVICE_DISK;
+    memset(expected, 0, sizeof(expected)); expected[0] = 1; expected[2] = FN_DISK_TYPE_RAW;
+    boot_limit = FN_MAX_PACKET_SIZE - FN_HEADER_SIZE - 11u;
+    if (boot_limit > 512) boot_limit = 512;
+    FN_PUT_LE16(expected + 3, 256); FN_PUT_LE16(expected + 5, boot_limit);
+    FN_PUT_LE16(expected + 7, 6); memcpy(expected + 9, "host:/", 6); expected_length = 15;
+    answer[1] = FN_DISK_TYPE_RAW; FN_PUT_LE16(answer + 2, 256);
+    FN_PUT_LE16(answer + 8, boot_limit + 1); memset(answer + 10, 'b', boot_limit + 1u);
+    answer_length = (uint16_t)(10u + boot_limit + 1u);
+    CHECK(fn_disk_inspect(&io, "host:/", FN_DISK_TYPE_RAW, 256, &inspect) == FN_ERR_IO);
     io.capacity = 20;
     setup(0x0f); expected_device = FN_DEVICE_DISK;
     memset(expected, 0, sizeof(expected)); expected[0] = 1; expected[2] = FN_DISK_TYPE_RAW;
