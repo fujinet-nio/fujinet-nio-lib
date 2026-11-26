@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include "nio.h"
@@ -563,7 +564,7 @@ static void test_tcp_echo(void)
     CHECK(write_at(h, 0, "ping pong", 9) == NIO_ST_OK);
     while (total < 9 && tries++ < 100) {
         status = read_at(h, (uint32_t)total, 32);
-        if (status == NIO_ST_NOT_READY) continue;
+        if (status == NIO_ST_NOT_READY) { struct timespec ts = { 0, 10000000L }; nanosleep(&ts, NULL); continue; }
         CHECK(status == NIO_ST_OK);
         if (status != NIO_ST_OK) break;
         memcpy(got + total, rd_data(), rd_got());
